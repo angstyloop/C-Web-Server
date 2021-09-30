@@ -46,7 +46,7 @@ int get_listener_socket(char *port)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_PASSIVE; // use my IP
 
-    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(NULL, port, &hints, &servinfo))) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         return -1;
     }
@@ -59,12 +59,12 @@ int get_listener_socket(char *port)
         // Try to make a socket based on this candidate interface
         if ((sockfd = socket(p->ai_family, p->ai_socktype,
             p->ai_protocol)) == -1) {
-            //perror("server: socket");
             continue;
         }
 
         // SO_REUSEADDR prevents the "address already in use" errors
         // that commonly come up when testing servers.
+
         if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
             sizeof(int)) == -1) {
             perror("setsockopt");

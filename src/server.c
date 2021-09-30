@@ -33,38 +33,73 @@
 #include "file.h"
 #include "mime.h"
 #include "cache.h"
+#include "gmtstamp.h"
 
-#define PORT "3490"  // the port users will be connecting to
+#define PORT "80"  // the port users will be connecting to
 
 #define SERVER_FILES "./serverfiles"
 #define SERVER_ROOT "./serverroot"
 
-/**
- * Send an HTTP response
+/** @brief Send an HTTP response
  *
- * header:       "HTTP/1.1 404 NOT FOUND" or "HTTP/1.1 200 OK", etc.
- * content_type: "text/plain", etc.
- * body:         the data to send.
+ *  header:       "HTTP/1.1 404 NOT FOUND" or "HTTP/1.1 200 OK", etc.
+ *  content_type: "text/plain", etc.
+ *  body:         the data to send.
  * 
- * Return the value from the send() function.
+ *  @return The the number of bytes sent.
  */
-int send_response(int fd, char *header, char *content_type, void *body, int content_length)
+int send_response(
+  int fd,
+  char* header,
+  char* content_type,
+  char* body,
+  size_t content_length)
 {
-    const int max_response_size = 262144;
-    char response[max_response_size];
 
-    // Build HTTP response and store it in response
+    char* date = gmtstamp();
 
-    ///////////////////
-    // IMPLEMENT ME! //
-    ///////////////////
+    // Build HTTP response format string $fmt. The order matches snprintf
+    // below.
+    char* fmt = 
+      "%s\r\n"
+      "Date: %s\r\n"
+      "Content-Length: %zu\r\n"
+      "Content-Type: %s\r\n"
+      "\r\n"
+      "%s\r\n"/*body*/;
 
-    // Send it all!
-    int rv = send(fd, response, response_length, 0);
+    // Compute the number of bytes we need to send. Note
+    // we don't include a terminating null byte, because
+    // send, like write, won't use it. Instead, send (and
+    // write) require the length of the message being sent,
+    // and will happily send null bytes.
+    size_t n = strlen(fmt) - (2 * 4/*%s*/ + 3 * 1/*%zu*/)
+      + strlen(header) 
+      + strlen(date) 
+      + numdigits(content_length) 
+      + strlen(content_type) 
+      + content_length;
 
-    if (rv < 0) {
-        perror("send");
-    }
+    // The response buffer is still nullbyte-terminated though.
+    char* response = calloc(n+1, 1);
+
+    // Matches the order in $fmt defined above.
+    snprintf(response, n+1, fmt, 
+      status_code,
+      status_msg,
+      date,
+      content_length,
+      content_type,
+      body)
+
+    // Send $n bytes (no flags).
+    int rv = send(fd, response, n, 0);
+
+    if(0>rv){perror("send")}
+
+    // Clean up
+    free(date);
+    free(response);
 
     return rv;
 }
@@ -137,36 +172,118 @@ char *find_start_of_body(char *header)
     ///////////////////
 }
 
-/**
- * Handle HTTP request and send response
+/** @brief Handle an HTTP request, and send an HTTP response.
+ *
+ *  @remark If the first line of the request exceeds SIZE_MAX, the request is ignored.
+ *
+ *  @param fd socket file descriptor
+ *  @param cache file cache to keep recently served files in memory
+ *  @return void
  */
 void handle_http_request(int fd, struct cache *cache)
 {
-    const int request_buffer_size = 65536; // 64K
-    char request[request_buffer_size];
+    const int szbuf = SIZE_MAX;
+    char* buf = calloc(szbuf, 1);
 
-    // Read request
-    int bytes_recvd = recv(fd, request, request_buffer_size - 1, 0);
-
-    if (bytes_recvd < 0) {
-        perror("recv");
-        return;
+    // Read request into buffer
+    //
+    // TODO: Allow for arbitrarily large requests by using a linked
+    // list of max size objects.
+    if(0>(bytes_recvd = recv(fd, buf, szbuf - 1, 0))){
+      perror("recv");
+      return;
     }
 
-
-    ///////////////////
-    // IMPLEMENT ME! //
-    ///////////////////
-
     // Read the first two components of the first line of the request 
- 
-    // If GET, handle the get endpoints
 
-    //    Check if it's /d20 and handle that special case
-    //    Otherwise serve the requested file by calling get_file()
+    // The first line looks like e.g. GET /d20 HTTP/1.1 
 
+    // In that example, we'd need to grab "GET" (the method) and "/d20" (the endpoint).
+    
+    char* s = buf, * e=0;
 
-    // (Stretch) If POST, handle the post request
+    // Skip any CRLF at the start of the request. Treat LF preceded by 0 or more CR the
+    // same as CRLF.
+
+    for(e=s; strstr("\r\n", *e); ++e){
+      if(szbuf > e - buf){
+        //serve a 413 Payload too large
+        //...
+        //quit
+        return;
+      }
+    }
+
+    // Parse the method by reading characters until a space is encountered (that isn't LF). If 
+    // it's a space, we've reached the character immediately after the end of the method.
+    // 
+    // For robustness, consider any consecutive number of these to be valid separating space:
+    //
+    // ' '  SP
+    // '\r' Bare CR
+    // '\t' HTAB
+    // '\v' VT
+    // '\f' FF
+
+    for(s=e; !strchr(" \r\t\v\f", *e); ++e){
+      if(szbuf > e - buf){
+        //serve a 413 Payload too large
+        //...
+        //quit
+        return;
+      }
+    }
+
+    // Copy out the substring [s, e) to $method.
+    char* method = calloc(e - s + 2, 1); 
+    memcpy(method, buf, e - s + 1);
+
+    // Skip space
+    for(s=e; strchr(" \r\t\v\f", *e); ++e){
+      if(szbuf > e - buf){
+        //serve a 413 Payload too large
+        free(method);
+        return;
+      }
+    }
+
+    // Parse the URI.
+    for(s=e; !strchr(" \r\t\v\f," *e); ++e){
+      if(szbuf > p - buf){
+        //serve a 413 Payload too large
+        free(method);
+        return;
+      }
+    }
+
+    // Copy out the substring [buf, p) to $uri
+    char* uri = calloc(e - s + 2, 1);
+    memcpy(uri, buf, e - s + 1);
+     
+    if(!strcmp("GET", method)){
+      // Handle GET request. Allow for absolute form of request-line.
+      if(!strcmp("/d20", uri) || !strcmp("http://www.localhost.com/d20")){
+        // Handle special case: /d20
+      }else{
+        // Serve requested file
+        get_file(...);
+      }
+    }else if(!strcmp("POST", method)){
+      // Handle POST request. The guide wants us to save the body to file, but let's just
+      // echo it back to the client instead.
+
+      // Find the start of the body in the HTTP request.
+
+      // Create an HTTP response, and copy the request body into the response body.
+      
+      // serve the response
+
+    }
+    
+    // Clean up
+    free(uri)
+    free(method):
+    free(request);
 }
 
 /**
@@ -223,4 +340,3 @@ int main(void)
 
     return 0;
 }
-

@@ -3,73 +3,62 @@
 #include <sys/stat.h>
 #include "file.h"
 
-/**
- * Loads a file into memory and returns a pointer to the data.
- * 
- * Buffer is not NUL-terminated.
+/** @brief Loads a file into memory and returns a pointer to the data.
+ *
+ *  @remark file_data::buffer on the returned file_data is null-terminated.
+ *
+ *  @param filename Name of the file to load. Must be a regular file in static root.
+ *
+ *  @return Pointer to newly created file_data.
  */
-struct file_data *file_load(char *filename)
-{
-    char *buffer, *p;
-    struct stat buf;
-    int bytes_read, bytes_remaining, total_bytes = 0;
+file_data* file_load(char* filename){
 
-    // Get the file size
-    if (stat(filename, &buf) == -1) {
-        return NULL;
-    }
+  // Get the file size. Assumes 
+  //
+  // TODO: Use DLL to store larger files in memory.
+  struct stat st;
+  if(stat(filename, &st) || SIZE_MAX <= st.st_size){return 0}
 
-    // Make sure it's a regular file
-    if (!(buf.st_mode & S_IFREG)) {
-        return NULL;
-    }
+  // Make sure it's a regular file
+  if(!S_ISREG(st.st_mode)){
+    fprintf(stderr, "Not a regular file: %s.\n", filename);
+    return 0;
+  }
 
-    // Open the file for reading
-    FILE *fp = fopen(filename, "rb");
+  // Open the file for reading
+  FILE* fp=0;
+  if(!(fp = fopen(filename, "rb"))){return 0}
 
-    if (fp == NULL) {
-        return NULL;
-    }
+  // Allocate as many bytes as the size of the file, plus one null byte.
+  char* buffer=0;
+  if(!(buffer = calloc(st.st_size + 1, 1))){return 0}
 
-    // Allocate that many bytes
-    bytes_remaining = buf.st_size;
-    p = buffer = malloc(bytes_remaining);
+  // Read the entire file into the buffer, leaving the last byte '\0'.
+  fread(buffer, 1, st.st_size, fp);
 
-    if (buffer == NULL) {
-        return NULL;
-    }
+  // Allocate the file data struct
+  file_data* filedata=0;
+  if(!(filedata = calloc(sizeof(filedata), 1))){
+    free(buffer);
+    return 0;
+  }
 
-    // Read in the entire file
-    while (bytes_read = fread(p, 1, bytes_remaining, fp), bytes_read != 0 && bytes_remaining > 0) {
-        if (bytes_read == -1) {
-            free(buffer);
-            return NULL;
-        }
+  // Initialize struct with name, data, and size.
+  size_t szname = strlen(filename);
+  filedata->name = calloc(szname + 1, 1);
+  memcpy(filedata->name, filename, szname);
 
-        bytes_remaining -= bytes_read;
-        p += bytes_read;
-        total_bytes += bytes_read;
-    }
+  filedata->data = buffer;
+  filedata->size = st_size + 1;
 
-    // Allocate the file data struct
-    struct file_data *filedata = malloc(sizeof *filedata);
-
-    if (filedata == NULL) {
-        free(buffer);
-        return NULL;
-    }
-
-    filedata->data = buffer;
-    filedata->size = total_bytes;
-
-    return filedata;
+  return filedata;
 }
 
 /**
  * Frees memory allocated by file_load().
  */
-void file_free(struct file_data *filedata)
-{
-    free(filedata->data);
-    free(filedata);
+void file_free(file_data *filedata){
+  free(filedata->data);
+  free(filedata->name);
+  free(filedata);
 }
