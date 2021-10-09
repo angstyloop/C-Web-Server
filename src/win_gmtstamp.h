@@ -6,6 +6,8 @@
 #    include <windows.h>
 #  endif
 
+#pragma warning(disable:4668) /*if not_defined treated as #if 0*/
+
 #  ifndef SYNCHAPI_H
 #    define SYNCHAPI_H
 #    include <synchapi.h>
@@ -37,6 +39,6 @@ extern HANDLE hIOMutex;
  *  RFC 822/1123/2616.
  *
  */
-char* win_gmtstamp();
+char* win_gmtstamp(void);
 
 #endif

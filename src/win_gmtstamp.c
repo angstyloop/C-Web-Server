@@ -22,9 +22,9 @@
 
 HANDLE hIOMutex={0};
 
-char* win_gmtstamp(){
+char* win_gmtstamp(void){
   time_t t = time(0);
-  struct tm tm={0};
+  struct tm tm;
 
   // Only allow one thread to call gmtime at a time.
   WaitForSingleObject(hIOMutex, INFINITE);
@@ -37,7 +37,7 @@ char* win_gmtstamp(){
 
   // Pick an initial size that's likely to work.
   size_t sz = 32;
-  char* stamp=0, * temp = calloc(sz, 1);
+  char* stamp, * temp = calloc(sz, 1);
 
   // If the initial size $sz is too small, double it. Repeat
   // until $z is large enough to fit all the output of
@@ -65,11 +65,12 @@ char* win_gmtstamp(){
 #    include <stdio.h>
 #  endif
 
-int main(){
-  hIOMutex = CreateMutex(0, 0, 0);
-  char* timestamp = win_gmtstamp();
-  puts(timestamp);
-  free(timestamp);
+int main(void){
+  printf("%d\n", _MSC_VER);
+  //hIOMutex = CreateMutex(0, 0, 0);
+  //char* timestamp = win_gmtstamp();
+  //puts(timestamp);
+  //free(timestamp);
   return EXIT_SUCCESS;
 }
 
@@ -77,5 +78,5 @@ int main(){
 
 /*
 WIN
-cl /Zi /Fe:test-win-gmtstamp /D TEST_WIN_GMTSTAMP win_gmtstamp.c
+cl /Wall /Zi /Fe:test-win-gmtstamp /DTEST_WIN_GMTSTAMP win_gmtstamp.c /wd4668 /wd4255 /wd4820 /wd4710 /wd4996
 */
