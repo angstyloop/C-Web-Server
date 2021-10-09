@@ -6,14 +6,14 @@ unsigned char rightNibble(unsigned char x){
 
 void TEST_rightNibble(unsigned char* bytes, size_t numBytes){
   for(size_t i=0; i<numBytes; ++i){
-    const unsigned char b = bytes[i], left = leftNibble(b);
-    assert(0 <= left && left < 256);
+    const unsigned char b = bytes[i], right = rightNibble(b);
+    assert(0 <= right && right < 256);
 
     printf("byte: ");
     if(b<16) printf("0");
     printf("%x\n", b);
 
-    printf("left nibble: %x\n", left);
+    printf("right nibble: %x\n", right);
   }
 }
 
@@ -25,7 +25,7 @@ int main(){
   TEST_rightNibble(bytes, numBytes);
 
   free(bytes);
-  returnSuccess();
+  returnSuccess;
 }
 #endif
 

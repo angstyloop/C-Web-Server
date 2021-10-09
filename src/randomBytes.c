@@ -110,7 +110,7 @@ int main(void){
 
   free(bytes);
 
-  returnSuccess();
+  returnSuccess;
 }
 #endif
 /*

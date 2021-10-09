@@ -25,7 +25,7 @@ int main(){
   TEST_leftNibble(bytes, numBytes);
 
   free(bytes);
-  returnSuccess();
+  returnSuccess;
 }
 #endif
 
