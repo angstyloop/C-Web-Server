@@ -1,0 +1,93 @@
+/** Make a 128-bit UUID that is compliant with Version 4 described in Section 
+ *  4.4 of RFC 4122.
+ *
+ *  In ABNF, the structure of a UUID according to RFC 4122 is as follows:
+ *  
+ *  uuid = time-low "-" time-mid "-" time-hi-and-version "-" 
+ *    clock-seq-and-reserved clock-seq-low "-" node  (128 bits)
+ *
+ *  time-low = 4hexOctet 
+ *    ; 32 bits
+ *
+ *  time-mid = 2hexOctet 
+ *    ; 16 bits
+ *
+ *  time-hi-and-version = 2hexOctet 
+ *    ; 16 bits
+ *
+ *  clock-seq-and-reserved = hexOctet 
+ *    ; 8 bits
+ *
+ *  clock-seq-low = hexOctet 
+ *    ; 8 bits
+ *
+ *  node = 6hexOctet 
+ *    ; 48 bits
+ *
+ *  hexOctet = hexDigit hexDigit
+ *  hexDigit =
+ *    "0" / "1" / "2" / "3" / "4" / "5" / "6" / "7" / "8" / "9" / 
+ *    "a" / "b" / "c" / "d" / "e" / "f" /
+ *    "A" / "B" / "C" / "D" / "E" / "F"
+ *
+ *
+ *  Version 4 is the easiest UUID to implement. It consists of 122 randomly 
+ *  chosen bits and 6 conventional bits that indicate this is a Version 4 
+ *  UUID. 
+ *
+ *  The details of Version 4 UUID from RFC 4122 are as follows:
+ *
+ *    - Set the two most significant bits (bits 6 and 7) of 
+ *      clock-seq-hi-and-reserved to 0 and 1, respectively.
+ * 
+ *      The bits are numbered from the LSB to the MSB, starting with 0. In 
+ *      other words, the LSB is bit 0, and the MSB is bit 7. This is just
+ *      a convention used by the authors.
+ *
+ *    - Set the four most significant bits (bits 12 through 15) of the 
+ *      time_hi_and_version field to the 4-bit version number 0100 (4). Write
+ *      the version number normally, from left to right, instead of right to
+ *      left like we did for the clock-seq-hi-and-reserved field.
+ *
+ *      In other words:
+ *        Bit 15 = 0
+ *        Bit 14 = 1
+ *        Bit 13 = 0
+ *        Bit 12 = 0
+ *
+ *    - Set all other bits to randomly or pseudo-randomly chosen values.
+ *      
+ *
+ *  Thus in ABNF the structure of a Version 4 UUID according to RFC 4122 is 
+ *  as follows, where x represents a random bit.
+ *
+ *  time-low = xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx 
+ *    ; 32 bits
+ *
+ *  time-mid = xxxxxxxx xxxxxxxx 
+ *    ; 16 bits
+ *
+ *  time-hi-and-version = 0100xxxx xxxxxxxx 
+ *    ; 16 bits
+ *    ; The leftmost word is 0100 (4).
+ *
+ *  clock-seq-hi-and-reserved = 10xxxxxx 
+ *    ; 8 bits
+ *    ;
+ *    ; Bits 0-5 are random. Bit 6 is 0. Bit 7 is 1. 
+ *
+ *  clock-seq-low = xxxxxxxx 
+ *    ; 8 bits
+ *
+ *  node = xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx xxxxxxxx 
+ *    ; 48 bits
+ *
+ *
+ *  And that's it! As for generating 124 cryptographically secure
+ *  random bits, I use BCryptGenRandom on Windows and read from /dev/random
+ *
+ *  Reference:
+ *    - RFC 4122, A Universally Unique IDentifier (UUID) URN Namespace
+ *    - RFC 1750, Randomness Recommendations for Security
+ *    - https://wiki.sei.cmu.edu/confluence/display/c/MSC30-C.+Do+not+use+the+rand%28%29+function+for+generating+pseudorandom+numbers
+ */
