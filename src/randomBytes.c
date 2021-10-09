@@ -114,5 +114,5 @@ int main(void){
 }
 #endif
 /*
-cl /Zi /Wall /wd4255 /wd4668 /wd4710 /Fe:test-random-bytes /D TEST_RANDOM_BYTES randomBytes.c errorExitFailure.c error.c exitFailure.c returnSuccess.c leftNibble.c rightNibble.c
+cl /Zi /Wall /wd4255 /wd4668 /wd4710 /Fe:test-random-bytes /D TEST_RANDOM_BYTES randomBytes.c errorExitFailure.c error.c exitFailure.c errorExit.c returnSuccess.c leftNibble.c rightNibble.c 
 */
