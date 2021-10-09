@@ -222,13 +222,21 @@ HttpStatus* HttpStatus_initByCode(HttpStatus* this, int code);
  */
 HttpStatus* HttpStatus_newByCode(int code);
 
-/** @brief Print this HttpStatus to an output stream.
+/** @brief Write the member values of $this HttpStatus object to an output stream $out.
  */
-HttpStatus* HttpStatus_print(HttpStatus*, FILE*);
+HttpStatus* HttpStatus_writeObject(HttpStatus* this, FILE* out);
 
-/** @brief Print each HttpStatus in an array to an output stream.
+/** @brief Create a new string representation of the HttpStatus, suitable for use in the first line of an HttpResponse. Must be freed.
  */
-HttpStatus** HttpStatus_printAll(HttpStatus**, FILE*);
+char* HttpStatus_getStatusString(HttpStatus* this);
+
+/** @brief Write the string representation of $this HttpStatus to an output stream $out.
+ */
+HttpStatus* HttpStatus_writeStatusString(HttpStatus* this, FILE* out);
+
+/** @brief Write the member values of each object in an array $objects to an output stream $out.
+ */
+HttpStatus** HttpStatus_writeObjects(HttpStatus** objects, FILE* out);
 
 /** @brief Free each HttpStatus in an array.
  */
