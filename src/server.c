@@ -34,6 +34,7 @@
 #include "mime.h"
 #include "cache.h"
 #include "gmtstamp.h"
+#include "perror_exit.h"
 
 #define PORT "80"  // the port users will be connecting to
 
@@ -48,6 +49,23 @@
  * 
  *  @return The the number of bytes sent.
  */
+
+typedef struct HttpResponseHeader HttpResponseHeader;
+struct HttpResponseHeader {
+  HttpProtocolVersion version;
+  HttpStatus status;
+};
+
+typedef struct HttpContentType HttpContentType;
+struct HttpContentType{};
+
+typedef struct http_response http_response;
+struct http_response {
+  http_response_header header;
+  char* content_type;
+  char* body;
+};
+
 int send_response(
   int fd,
   char* header,
@@ -82,6 +100,7 @@ int send_response(
 
     // The response buffer is still nullbyte-terminated though.
     char* response = calloc(n+1, 1);
+    if(!response) perror_exit("calloc");
 
     // Matches the order in $fmt defined above.
     snprintf(response, n+1, fmt, 
@@ -184,6 +203,7 @@ void handle_http_request(int fd, struct cache *cache)
 {
     const int szbuf = SIZE_MAX;
     char* buf = calloc(szbuf, 1);
+    if(!buf) perror_exit("calloc");
 
     // Read request into buffer
     //
@@ -236,6 +256,7 @@ void handle_http_request(int fd, struct cache *cache)
 
     // Copy out the substring [s, e) to $method.
     char* method = calloc(e - s + 2, 1); 
+    if(!method) perror_exit("calloc");
     memcpy(method, buf, e - s + 1);
 
     // Skip space
@@ -258,6 +279,7 @@ void handle_http_request(int fd, struct cache *cache)
 
     // Copy out the substring [buf, p) to $uri
     char* uri = calloc(e - s + 2, 1);
+    if(!uri) perror_exit("calloc");
     memcpy(uri, buf, e - s + 1);
      
     if(!strcmp("GET", method)){
