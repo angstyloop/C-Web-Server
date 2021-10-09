@@ -75,7 +75,4 @@ int main(){
 /*
 GNU
 gcc -lpthread -DTEST_GMTSTAMP -g -Wall -o test-gmtstamp gmtstamp.c
-
-WIN
-cl /Zi /Wall /Fe:test-gmtstamp /D TEST_GMTSTAMP gmtstamp.c
 */
