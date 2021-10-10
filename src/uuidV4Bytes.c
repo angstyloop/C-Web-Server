@@ -28,7 +28,7 @@ int main(void){
 }
 #endif
 /*
-cl /Wall /wd4255 /wd4668 /wd4710 /Fe:test-uuid-v4-bytes /DTEST_UUID_V4_BYTES uuidV4Bytes.c randomBytes.c setBit.c unsetBit.c 
+cl /Wall /wd4255 /wd4668 /wd4710 /Fe:test-uuid-v4-bytes /DTEST_UUID_V4_BYTES uuidV4Bytes.c randomBytes.c setBit.c unsetBit.c errorExitFailure.c errorExit.c error.c exitFailure.c
 
 4710: a member of the printf family of functions was not inlined by the 
 compiler.
