@@ -102,7 +102,7 @@ unsigned char* randomBytes(size_t numBytes){
 #include "rightNibble.h"
 
 int main(void){
-  unsigned long numBytes = 1;
+  unsigned long numBytes = 4;
   unsigned char * bytes = randomBytes(numBytes);
 
   TEST_leftNibble(bytes, numBytes);

@@ -1,10 +1,10 @@
-/** Make a 128-bit UUID that is compliant with Version 4 described in Section 
- *  4.4 of RFC 4122.
+/** Goal: Make a 128-bit UUID that is compliant with Version 4 described 
+ *  in Section 4.4 of RFC 4122.
  *
  *  In ABNF, the structure of a UUID according to RFC 4122 is as follows:
  *  
  *  uuid = time-low "-" time-mid "-" time-hi-and-version "-" 
- *    clock-seq-and-reserved clock-seq-low "-" node  (128 bits)
+ *    clock-seq-and-reserved clock-seq-low "-" node (128 bits)
  *
  *  time-low = 4hexOctet 
  *    ; 32 bits
@@ -15,7 +15,7 @@
  *  time-hi-and-version = 2hexOctet 
  *    ; 16 bits
  *
- *  clock-seq-and-reserved = hexOctet 
+ *  clock-seq-hi-and-reserved = hexOctet 
  *    ; 8 bits
  *
  *  clock-seq-low = hexOctet 
@@ -84,10 +84,13 @@
  *
  *
  *  And that's it! As for generating 124 cryptographically secure
- *  random bits, I use BCryptGenRandom on Windows and read from /dev/random
+ *  random bits, I use BCryptGenRandom on Windows and read from 
+ *  /dev/urandom on Unix (after using ioctl to confirm there are bits
+ *  of entropy available).
  *
  *  Reference:
  *    - RFC 4122, A Universally Unique IDentifier (UUID) URN Namespace
  *    - RFC 1750, Randomness Recommendations for Security
  *    - https://wiki.sei.cmu.edu/confluence/display/c/MSC30-C.+Do+not+use+the+rand%28%29+function+for+generating+pseudorandom+numbers
  */
+char* uuid();
