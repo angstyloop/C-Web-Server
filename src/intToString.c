@@ -1,6 +1,7 @@
 #include "intToString.h"
 
-char* intToString(long i){
+// uses math
+char* intToStringV2(long i){
   char* p=0;
   char z[11]={0};
   p=z
@@ -18,8 +19,19 @@ char* intToString(long i){
   return p;
 }
 
-/** TEST
- */
+// Uses snprintf
+char* intToString(long z){
+  char* s = calloc(11, 1);
+  sprintf(s, 10, "%ld", z);
+  size_t n = strlen(s);
+  if(n==10) return s;
+  char* t = realloc(s, n+1);
+  if(!t){
+    free(s);
+    perrorExit("realloc");
+  }
+  return t;
+}
 
 #ifdef TEST_INT_TO_STRING_H
 #ifndef STDLIB_H
