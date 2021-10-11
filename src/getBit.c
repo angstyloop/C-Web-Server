@@ -1,6 +1,6 @@
 #include "getBit.h"
 
-int getBit(unsigned char* byte, int index){
+int getBit(unsigned char* byte, size_t index){
   return (byte[index/8] & (1 << index%8)) ? 1 : 0;
 }
 

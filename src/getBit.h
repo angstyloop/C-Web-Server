@@ -4,6 +4,6 @@
 #include "__assert.h"
 #include "returnSuccess.h"
 
-int getBit(unsigned char* byte, int index);
+int getBit(unsigned char* byte, size_t index);
 
 #endif
