@@ -13,6 +13,7 @@ char* hexString(unsigned char* bytes, size_t numBytes){
   return str;
 }
 
+#ifdef TEST_HEX_STRING
 int main(void){
   size_t numBytes = 4;
   unsigned char* bytes = calloc(numBytes, 1);
@@ -26,6 +27,7 @@ int main(void){
   free(bytes);
   return 0;
 }
+#endif
 
 /*
 cl /Wall /wd4710 /Fe:test-hex-string hexString.c
