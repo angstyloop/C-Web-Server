@@ -80,7 +80,7 @@ char* Uuid_hexString(Uuid* this){
 
 Uuid* Uuid_printHexString(Uuid* this){
   char* str = Uuid_hexString(this);
-  printf("%s", str);
+  printf("%s\n", str);
   free(str);
   return this;
 }
@@ -92,7 +92,7 @@ int main(void){
 #endif
 
 /*
-cls; cl /Zi /Wall /wd4255 /wd4668 /wd4710 /Fe:test-uuid /DTEST_UUID uuid.c randomBytes.c uuidV4Bytes.c hexString.c errorExitFailure.c errorExit.c error.c
+cls; cl /Zi /Wall /wd4255 /wd4668 /wd4710 /Fe:test-uuid /DTEST_UUID uuid.c randomBytes.c uuidV4Bytes.c hexString.c errorExitFailure.c errorExit.c error.c setBit.c unsetBit.c
 *
 * 4255: Converting () to (void). Some places use empty function argument lists
 * without specifying void, and explicitly ignore this warning. On windows, I
