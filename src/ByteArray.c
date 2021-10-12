@@ -177,8 +177,17 @@ ByteArray* ByteArray_append(ByteArray* this, ByteArray* that){
   return this;
 }
 
+// Trim by dividing as many times by SHRINK_FACTOR as possible without going 
+// below $len.
+
 ByteArray* ByteArray_trim(ByteArray* this){
-  
+  size_t size = this->size, temp = size / SHRINK_FACTOR;
+  while(temp >= len){
+    size = temp;
+    temp /= SHRINK_FACTOR;
+  }
+  this->size = size;
+  return ByteArray_resize(this, size);
 }
 
 // [start,end)
@@ -287,4 +296,16 @@ ByteArray* ByteArray_applyAnd(ByteArray* this, ByteArray* that){
 
 ByteArray* ByteArray_applyOr(ByteArray* this, ByteArray* that){
   return ByteArray_applyBinOp(this, that, UCharBinOp_or);
+}
+
+int ByteArray_getBit(ByteArray* this, size_t index){
+  return getBit(this->data, index);
+}
+
+ByteArray* ByteArray_setBit(ByteArray* this, size_t index){
+  setBit(this->data, index);
+}
+
+ByteArray* ByteArray_unsetBit(ByteArray* this, size_t index){
+  unsetBit(this->data, index);
 }
