@@ -1,7 +1,7 @@
 #include "countZeroBits.h"
 
-size_t countZeroBits(size_t size, unsigned char* bytes){
-  return size*8 - countOneBits(size, bytes);
+uintmax_t countZeroBits(size_t size, unsigned char* bytes){
+  return (uintmax_t)size * 8 - countOneBits(size, bytes);
 }
 
 #ifdef TEST_COUNT_ZERO_BITS

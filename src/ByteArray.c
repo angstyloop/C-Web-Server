@@ -1,28 +1,11 @@
 #include "ByteArray.h"
 
-typedef struct ByteArray ByteArray;
-struct ByteArray{
-  size_t len;
-  size_t size;
-  unsigned char* data;
-};
-
-ByteArray* ByteArray_create(size_t size);
 ByteArray* ByteArray_create(size_t size){
   ByteArray* this = calloc(size, sizeof(ByteArray));
   return this;
 }
 
-//void ByteArray_checkLengthBounds(ByteArray* this, size_t len);
-//void ByteArray_checkLengthBounds(ByteArray* this, size_t len){
-// if(len > this->size){
-//   fprintf(stderr, "len: %zu, size: %zu\n", len, this->size);
-//   ByteArray_free(this);
-//   errorExitFailure("(ByteArray_init) Requested length exceeds allocated size.");
-// }
-//}
-
-// May truncate, in which case length is modified.
+// resize won't do unneccessary work
 
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   if(this->size == newSize){
@@ -31,10 +14,10 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   if(!newSize){
     return ByteArray_free(this);
   }
-  char* temp = realloc(this->data, newSize);
+  unsigned char* temp = realloc(this->data, newSize);
   if(!temp){
     ByteArray_free(this);
-    perrorExitFailure("realloc");
+    perrorExit("realloc");
   };
   this->data = temp; 
   this->size = newSize;
@@ -85,7 +68,9 @@ int isSizeDifferenceBounded(size_t minuend, size_t subtrahend){
 }
 
 size_t boundedSizeDifference(size_t minuend, size_t subtrahend){
-  return isSizeDifferenceBounded() ? minuend - subtrahend : 0;
+  return isSizeDifferenceBounded(minuend, subtrahend) ? 
+    minuend - subtrahend: 
+    0;
 }
 
 // All the grow and shrink operations
@@ -123,7 +108,7 @@ ByteArray* ByteArray_shrinkByFactor(ByteArray* this, size_t factor){
 
 // We do have to worry about wrapping with modulo subtraction though.
 ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta){
-  return if(!delta || !this->size)?
+  return (!delta || !this->size)?
     this:
     ByteArray_resize(this, boundedSizeDifference(this->size, delta));
 }
@@ -131,7 +116,7 @@ ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta){
 #define GROW_FACTOR 2
 #define SHRINK_FACTOR GROW_FACTOR
 
-ByteArray* growToAccommodate(ByteArray* this, size_t len){
+ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
   if (this->size >= len){
     return this;
   }
@@ -148,13 +133,13 @@ ByteArray* growToAccommodate(ByteArray* this, size_t len){
 }
 
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
-  growToAccommodate(ByteArray* this, size_t len);
+  ByteArray_growToAtLeast(this, len);
   memcpy(this->data, data, len);
   return this;
 }
 
 ByteArray* ByteArray_new(size_t len, unsigned char* data){
-  return ByteArray_init(ByteArray_create(len), data);
+  return ByteArray_init(ByteArray_create(len), len, data);
 }
 
 // append $that to $this
@@ -163,7 +148,7 @@ ByteArray* ByteArray_append(ByteArray* this, ByteArray* that){
   if(!that && !that->len){
     return this;
   }
-  this->growToAccomodate(this, that->len);
+  ByteArray_growToAtLeast(this, that->len);
   memcpy(this->data + this->len, that->data, that->len);
   this->len += that->len;
   return this;
@@ -171,10 +156,15 @@ ByteArray* ByteArray_append(ByteArray* this, ByteArray* that){
 
 // Trim by dividing as many times by SHRINK_FACTOR as possible without going 
 // below $len.
+//
+// E.g. If $SHRINK_FACTOR is 2, $size is 16, and $len is 3, trimming will
+// resize to 4. If instead $SHRINK_FACTOR is 3, then trimming will resize
+// to 5 instead.
+//
 
 ByteArray* ByteArray_trim(ByteArray* this){
   size_t size = this->size, temp = size / SHRINK_FACTOR;
-  while(temp >= len){
+  while(temp >= this->len){
     size = temp;
     temp /= SHRINK_FACTOR;
   }
@@ -188,40 +178,45 @@ ByteArray* ByteArray_slice(ByteArray* this, size_t start, size_t end){
   return ByteArray_new(end-start+1, this->data + start);
 }
 
-char* ByteArray_printHeader(ByteArray* this, FILE* out){
-  fprintf("%s, %s, %s\n", "len", "size", "data");
+ByteArray* ByteArray_printHeader(ByteArray* this, FILE* out){
+  fprintf(out, "%s, %s, %s\n", "len", "size", "data");
   return this;
 }
 
-char* ByteArray_printSelf(ByteArray* this, FILE* out){
+ByteArray* ByteArray_print(ByteArray* this, FILE* out){
   // Print $len
   fprintf(out, "%zu, ", this->len);
   // Print $size and open brace of $data array.
   fprintf(out, "%zu, {", this->size);
-  // Print $data array contents, except last item.
-  for(int i=0; i<this->len-1; ++i){
-    fprintf(out, "%u, ", this->data[i]);
+  // If $data is not 0, print $data array contents, except last item.
+  if(this->data){
+    for(size_t i=0; i<this->len-1; ++i){
+      fprintf(out, "%u, ", this->data[i]);
+    }
+    // Print last item of $data and close brace of $data array.
+    fprintf(out, "%u}\n", this->data[this->len-1]);
   }
-  // Print last item of $data and close brace of $data array.
-  fprintf(out, "%u}\n", last);
   return this;
 }
 
 ByteArray* ByteArray_free(ByteArray* this){
-  free(data);
-  this->len = this->size = this->data = 0;
+  free(this->data);
+  this->len = this->size = 0; 
+  this->data = 0;
   free(this);
+  return this;
 }
 
-ByteArray* ByteArray_countOneBits(){
-  return countOneBits(len, this->data);
+uintmax_t ByteArray_countOneBits(ByteArray* this){
+  return countOneBits(this->len, this->data);
 }
 
-ByteArray* ByteArray_countZeroBits(){
-  return countZeroBits(len, this->data);
+uintmax_t ByteArray_countZeroBits(ByteArray* this){
+  return countZeroBits(this->len, this->data);
 }
 
-typedef unsigned char (*op)(unsigned char, unsigned char) UCharBinOp;
+// TODO: try removing this
+typedef unsigned char (*UCharBinOp)(unsigned char, unsigned char);
 
 unsigned char UCharBinOp_xor(unsigned char a, unsigned char b){
   return a^b;
@@ -245,9 +240,8 @@ void ByteArray_checkLengthsMatch(ByteArray* this, ByteArray* that, char* callerN
 
 ByteArray* ByteArray_applyBinOp(ByteArray* this, ByteArray* that, UCharBinOp op){
   ByteArray_checkLengthsMatch(this, that, "applyBinOp");
-  for(size_t i=0; i<this->len; ++i){
-    this->data[i] = op(this->data[i], that->data[i])
-  }
+  for(size_t i=0; i<this->len; ++i)
+    this->data[i] = op(this->data[i], that->data[i]);
   return this;
 }
 
@@ -288,25 +282,89 @@ int ByteArray_getBit(ByteArray* this, size_t index){
   return getBit(this->data, index);
 }
 
-ByteArray* ByteArray_setBit(ByteArray* this, size_t index){
+ByteArray* ByteArray_setBit(ByteArray* this, uintmax_t index){
   setBit(this->data, index);
   return this;
 }
 
-ByteArray* ByteArray_unsetBit(ByteArray* this, size_t index){
+ByteArray* ByteArray_unsetBit(ByteArray* this, uintmax_t index){
   unsetBit(this->data, index);
   return this;
 }
 
 #ifdef TEST_BYTE_ARRAY
 int main(void){
+  size_t len, size; len=size=1;
+  unsigned char* data = calloc(1, 1);
+  data[0]=1;
 
-  // ...
+  puts("TEST");
+
+  puts("create");
+  ByteArray* ba = ByteArray_create(1);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("init");
+  ByteArray_init(ba, len, data);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("resize");
+  ByteArray_resize(ba, size*=2);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("free");
+  ByteArray_free(ba);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("create");
+  ba = ByteArray_create(size);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("init using $data with $len > $ba->size, to force a resize"); 
+  unsigned char* temp = realloc(data, len*=10);
+  if(!temp) perrorExit("realloc");
+  data=temp;
+  memset(data, 1, len);
+  ByteArray_init(ba, len, data);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("growByFactor");
+  ByteArray_growByFactor(ba, 2);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("shrinkByFactor");
+  ByteArray_shrinkByFactor(ba, 2);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("growByDelta");
+  ByteArray_growByDelta(ba, size = ba->size);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("shrinkByDelta");
+  ByteArray_shrinkByDelta(ba, size);
+  puts("print");
+  ByteArray_print(ba, stdout);
+
+  puts("free");
+  ByteArray_free(ba);
+  puts("print");
+  ByteArray_print(ba, stdout);
 
   returnSuccess;
 }
 #endif
 
 /*
-cl /Wall /Fe:test-byte-array.c /DTEST_BYTE_ARRAY ByteArray.c getBit.c setBit.c unsetBit.c countOneBits.c countZeroBits.c
+cl /Wall /wd4710 /Fe:test-byte-array /DTEST_BYTE_ARRAY ByteArray.c getBit.c setBit.c unsetBit.c countOneBits.c countZeroBits.c exitFailure.c perrorExit.c
+
+4710: (fprintf) member of printf family of functions not inlined
 */

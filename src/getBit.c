@@ -1,6 +1,6 @@
 #include "getBit.h"
 
-int getBit(unsigned char* byte, size_t index){
+int getBit(unsigned char* byte, uintmax_t index){
   return (byte[index/8] & (1 << index%8)) ? 1 : 0;
 }
 
@@ -9,13 +9,13 @@ int main(void){
   {
     unsigned char byte=128;
     assert(getBit(&byte, 7) == 1);
-    for(int i=0; i<7; ++i) assert(!getBit(&byte, i));
+    for(uintmax_t i=0; i<7; ++i) assert(!getBit(&byte, i));
   }
 
   {
     unsigned char byte=1;
     assert(getBit(&byte, 0) == 1);
-    for(int i=7; i>0; --i) assert(!getBit(&byte, i));
+    for(uintmax_t i=7; i>0; --i) assert(!getBit(&byte, i));
   }
 
   returnSuccess;

@@ -2,8 +2,9 @@
 
 #include "__stdio.h"
 #include "__assert.h"
+#include "__stdint.h"
 #include "returnSuccess.h"
 
-int getBit(unsigned char* byte, size_t index);
+int getBit(unsigned char* byte, uintmax_t index);
 
 #endif

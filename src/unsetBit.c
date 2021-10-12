@@ -1,6 +1,6 @@
 #include "unsetBit.h"
 
-void unsetBit(unsigned char* byte, int index){
+void unsetBit(unsigned char* byte, uintmax_t index){
   byte[index/8] &= ~(1 << index%8);
 }
 

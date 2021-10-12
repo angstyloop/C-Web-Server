@@ -1,6 +1,6 @@
 #include "setBit.h"
 
-void setBit(unsigned char* byte, int index){
+void setBit(unsigned char* byte, uintmax_t index){
   byte[index/8] |= 1 << index%8;
 }
 

@@ -1,8 +1,9 @@
 #include "countOneBits.h"
 
-size_t countOneBits(size_t size, unsigned char* bytes){
-  size_t sum=0;
-  for(size_t i=0; i<size*8; ++i) if(getBit(bytes, i)) ++sum;
+uintmax_t countOneBits(size_t size, unsigned char* bytes){
+  uintmax_t sum=0;
+  const uintmax_t numBits = (uintmax_t)size*8;
+  for(uintmax_t i=0; i<numBits; ++i) if(getBit(bytes, i)) ++sum;
   return sum;
 }
 

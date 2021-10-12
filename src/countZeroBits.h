@@ -8,6 +8,6 @@
 #include "returnSuccess.h"
 #endif
 
-size_t countZeroBits(size_t size, unsigned char* bytes);
+uintmax_t countZeroBits(size_t size, unsigned char* bytes);
 
 #endif

@@ -1,5 +1,5 @@
 #include "exitFailure.h"
 
-void exitFailure(){
+void exitFailure(void){
   exit(EXIT_FAILURE);
 }
