@@ -1,3 +1,5 @@
+#include "ByteArray.h"
+
 typedef struct ByteArray ByteArray;
 struct ByteArray{
   size_t len;
@@ -22,7 +24,6 @@ ByteArray* ByteArray_create(size_t size){
 
 // May truncate, in which case length is modified.
 
-ByteArray* ByteArray_resize(ByteArray* this, size_t newSize);
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   if(this->size == newSize){
     return this;
@@ -56,13 +57,11 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
 // This macro will be convenient 
 #define IS_SIZE_MAX_EVEN (SIZE_MAX % 2 == 0)
 
-int isSizeProductBounded(size_t left, size_t right);
 int isSizeProductBounded(size_t left, size_t right){
   if(!right) return 1;
   return left <= SIZE_MAX/right + (IS_SIZE_MAX_EVEN ? 0 : 1);
 }
 
-size_t boundedSizeProduct(size_t left, size_t right);
 size_t boundedSizeProduct(size_t left, size_t right){
   return isSizeProductBounded(left, right) ? left * right : SIZE_MAX;
 }
@@ -70,12 +69,10 @@ size_t boundedSizeProduct(size_t left, size_t right){
 // Similar considerations are made for a sum of size_t, except the parity 
 // doesn't matter.
 
-int isSizeSumBounded(size_t left, size_t right);
 int isSizeSumBounded(size_t left, size_t right){
   return left <= SIZE_MAX - right;
 }
 
-size_t boundedSizeSum(size_t left, size_t right);
 size_t boundedSizeSum(size_t left, size_t right){
   return isSizeSumBounded(left, right) ? left + right : SIZE_MAX;
 }
@@ -83,12 +80,10 @@ size_t boundedSizeSum(size_t left, size_t right){
 // Similar considerations are made for a difference of size_t, except the
 // parity doesn't matter, and now the bound is a lower bound 0.
 
-int isSizeDifferenceBounded(size_t minuend, size_t subtrahend);
 int isSizeDifferenceBounded(size_t minuend, size_t subtrahend){
   return subtrahend <= minuend;
 }
 
-size_t boundedSizeDifference(size_t minuend, size_t subtrahend);
 size_t boundedSizeDifference(size_t minuend, size_t subtrahend){
   return isSizeDifferenceBounded() ? minuend - subtrahend : 0;
 }
@@ -136,7 +131,6 @@ ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta){
 #define GROW_FACTOR 2
 #define SHRINK_FACTOR GROW_FACTOR
 
-ByteArray* growToAccommodate(ByteArray* this, size_t len);
 ByteArray* growToAccommodate(ByteArray* this, size_t len){
   if (this->size >= len){
     return this;
@@ -153,14 +147,12 @@ ByteArray* growToAccommodate(ByteArray* this, size_t len){
   return ByteArray_resize(this, size);
 }
 
-ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data);
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
   growToAccommodate(ByteArray* this, size_t len);
   memcpy(this->data, data, len);
   return this;
 }
 
-ByteArray* ByteArray_new(size_t len, unsigned char* data);
 ByteArray* ByteArray_new(size_t len, unsigned char* data){
   return ByteArray_init(ByteArray_create(len), data);
 }
@@ -196,13 +188,11 @@ ByteArray* ByteArray_slice(ByteArray* this, size_t start, size_t end){
   return ByteArray_new(end-start+1, this->data + start);
 }
 
-char* ByteArray_printHeader(ByteArray* this, FILE* out);
 char* ByteArray_printHeader(ByteArray* this, FILE* out){
   fprintf("%s, %s, %s\n", "len", "size", "data");
   return this;
 }
 
-char* ByteArray_printSelf(ByteArray* this, FILE* out);
 char* ByteArray_printSelf(ByteArray* this, FILE* out){
   // Print $len
   fprintf(out, "%zu, ", this->len);
@@ -217,7 +207,6 @@ char* ByteArray_printSelf(ByteArray* this, FILE* out){
   return this;
 }
 
-ByteArray* ByteArray_free(ByteArray* this);
 ByteArray* ByteArray_free(ByteArray* this){
   free(data);
   this->len = this->size = this->data = 0;
@@ -234,17 +223,14 @@ ByteArray* ByteArray_countZeroBits(){
 
 typedef unsigned char (*op)(unsigned char, unsigned char) UCharBinOp;
 
-unsigned char UCharBinOp_xor(unsigned char a, unsigned char b);
 unsigned char UCharBinOp_xor(unsigned char a, unsigned char b){
   return a^b;
 }
 
-unsigned char UCharBinOp_and(unsigned char a, unsigned char b);
 unsigned char UCharBinOp_and(unsigned char a, unsigned char b){
   return a&b;
 }
 
-unsigned char UCharBinOp_or(unsigned char a, unsigned char b);
 unsigned char UCharBinOp_or(unsigned char a, unsigned char b){
   return a|b;
 }
@@ -304,8 +290,23 @@ int ByteArray_getBit(ByteArray* this, size_t index){
 
 ByteArray* ByteArray_setBit(ByteArray* this, size_t index){
   setBit(this->data, index);
+  return this;
 }
 
 ByteArray* ByteArray_unsetBit(ByteArray* this, size_t index){
   unsetBit(this->data, index);
+  return this;
 }
+
+#ifdef TEST_BYTE_ARRAY
+int main(void){
+
+  // ...
+
+  returnSuccess;
+}
+#endif
+
+/*
+cl /Wall /Fe:test-byte-array.c /DTEST_BYTE_ARRAY ByteArray.c getBit.c setBit.c unsetBit.c countOneBits.c countZeroBits.c
+*/
