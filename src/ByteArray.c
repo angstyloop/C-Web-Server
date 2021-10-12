@@ -1,7 +1,9 @@
 #include "ByteArray.h"
 
 ByteArray* ByteArray_create(size_t size){
-  ByteArray* this = calloc(size, sizeof(ByteArray));
+  ByteArray* this = calloc(1, sizeof(ByteArray));
+  this->data = calloc(size, 1);
+  this->size=size;
   return this;
 }
 
@@ -37,12 +39,10 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
 // - SIZE_MAX could be odd I guess. Consider the cases separately so we can 
 //   actually allocate objects of size SIZE_MAX, but no greater. 
 
-// This macro will be convenient 
-#define IS_SIZE_MAX_EVEN (SIZE_MAX % 2 == 0)
-
 int isSizeProductBounded(size_t left, size_t right){
   if(!right) return 1;
-  return left <= SIZE_MAX/right + (IS_SIZE_MAX_EVEN ? 0 : 1);
+  // it's a little pedantice, but good to check if size_max is even
+  return left <= SIZE_MAX/right + (!(SIZE_MAX%2)?0:1); 
 }
 
 size_t boundedSizeProduct(size_t left, size_t right){
@@ -117,7 +117,10 @@ ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta){
 #define SHRINK_FACTOR GROW_FACTOR
 
 ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
-  if (this->size >= len){
+  if(!this || !this->size){
+    return ByteArray_create(len);
+  }
+  if(this->size >= len){
     return this;
   }
   if(!len || len == SIZE_MAX){
@@ -128,13 +131,21 @@ ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
   size_t size = this->size;
   do{
     size = boundedSizeProduct(size, GROW_FACTOR);
+    //printf("size: %zu\n", size);
   }while(size < len);
   return ByteArray_resize(this, size);
 }
 
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
+  //printf("this: %s, size: %zu, len: %zu, data: %s\n", 
+  //  this?"non-null":"null", this->size, len, data?"non-null":"null");
   ByteArray_growToAtLeast(this, len);
+
+//
+  if(!this->data) puts("\t<#^#>\n");
+//
   memcpy(this->data, data, len);
+
   return this;
 }
 
@@ -189,13 +200,15 @@ ByteArray* ByteArray_print(ByteArray* this, FILE* out){
   // Print $size and open brace of $data array.
   fprintf(out, "%zu, {", this->size);
   // If $data is not 0, print $data array contents, except last item.
-  if(this->data){
-    for(size_t i=0; i<this->len-1; ++i){
-      fprintf(out, "%u, ", this->data[i]);
-    }
-    // Print last item of $data and close brace of $data array.
-    fprintf(out, "%u}\n", this->data[this->len-1]);
+  if(!this->data || !this->len){
+    fprintf(out, "}");
+    return this;
   }
+  for(size_t i=0; i<this->len-1; ++i){
+    fprintf(out, "%u, ", this->data[i]);
+  }
+  // Print last item of $data and close brace of $data array.
+  fprintf(out, "%u}\n", this->data[this->len-1]);
   return this;
 }
 
@@ -300,31 +313,40 @@ int main(void){
 
   puts("TEST");
 
+  puts("");
   puts("create");
   ByteArray* ba = ByteArray_create(1);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("init");
   ByteArray_init(ba, len, data);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("resize");
   ByteArray_resize(ba, size*=2);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("free");
   ByteArray_free(ba);
-  puts("print");
-  ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("create");
   ba = ByteArray_create(size);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("init using $data with $len > $ba->size, to force a resize"); 
   unsigned char* temp = realloc(data, len*=10);
   if(!temp) perrorExit("realloc");
@@ -333,32 +355,42 @@ int main(void){
   ByteArray_init(ba, len, data);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("growByFactor");
   ByteArray_growByFactor(ba, 2);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("shrinkByFactor");
   ByteArray_shrinkByFactor(ba, 2);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("growByDelta");
   ByteArray_growByDelta(ba, size = ba->size);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("shrinkByDelta");
   ByteArray_shrinkByDelta(ba, size);
   puts("print");
   ByteArray_print(ba, stdout);
+  puts("");
 
+  puts("");
   puts("free");
   ByteArray_free(ba);
-  puts("print");
-  ByteArray_print(ba, stdout);
 
+  puts("");
+  puts("OK");
   returnSuccess;
 }
 #endif
