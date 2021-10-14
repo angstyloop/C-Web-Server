@@ -1,7 +1,7 @@
 #include "ByteArray.h"
 
 ByteArray* ByteArray_create(size_t size){
-  ByteArray* this=0;
+  ByteArray* this=0L;
 
   if(!(this = calloc(1, sizeof(ByteArray)))) 
     perrorExit("ByteArray_create calloc this");
@@ -14,7 +14,14 @@ ByteArray* ByteArray_create(size_t size){
   return this;
 }
 
-ByteArray* ByteArray_zero(ByteArray* this, size_t newSize){}
+ByteArray* ByteArray_fill(ByteArray* this, unsigned char byte){
+  memset(this->data, (int)byte, this->size);
+  return this;
+}
+
+ByteArray* ByteArray_zero(ByteArray* this){
+  return ByteArray_fill(this, 0, this->size);
+}
 
 // resize won't do unneccessary work
 
@@ -32,8 +39,10 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   };
   this->data = temp; 
   this->size = newSize;
-  if(newSize < this->len){
+  if(newSize < this->len){ // if truncating, set the length to the new size
     this->len = newSize;
+  } else if(newSize > this->len){ // if expanding, pad end with zeroes
+    memset(this->data + this->len, 0, this->size - this->len + 1);
   }
   return this;
 }
@@ -42,24 +51,29 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
 // - We need to check bounds before multiplying two size_t because size_t use
 //   arithmetic is modular (like all unsigned integer arithmetic).
 //
-// - Integer division is floor division, so we need the parity of SIZE_MAX
-//   in order to properly check bounds.
+// - Integer division is floor division. Inverting floor division two nonzero
+//   positive integers n/m = l always gives m possible values for n in the
+//   interval [l*m, (l+1)*m).
 //
-// - SIZE_MAX could be odd I guess. Consider the cases separately so we can 
-//   actually allocate objects of size SIZE_MAX, but no greater. 
+//   So n/m < l does not necessarily imply n < l*m. Instead,
+//
+//     n/m < l => n < (l+1)*m
+//
+//   Now suppose n/m > l. Then n >= l*m.
+//
+//   Thus, to guarantee the product of two size_t n and m is less than or equal
+//   to SIZE_MAX (n*m <= SIZE_MAX), it is sufficient to require the quotient 
+//   of SIZE_MAX with one of them be strictly greater than the other 
+//   (n < SIZE_MAX/m or m < SIZE_MAX/n), avoiding dividing by zero of course.
 
 int isSizeProductBounded(size_t left, size_t right){
   if(!right) return 1;
-  // it's a little pedantice, but good to check if size_max is even
-  return left <= SIZE_MAX/right + (!(SIZE_MAX%2)?0:1); 
+  return left < SIZE_MAX/right; 
 }
 
 size_t boundedSizeProduct(size_t left, size_t right){
   return isSizeProductBounded(left, right) ? left * right : SIZE_MAX;
 }
-
-// Similar considerations are made for a sum of size_t, except the parity 
-// doesn't matter.
 
 int isSizeSumBounded(size_t left, size_t right){
   return left <= SIZE_MAX - right;
@@ -68,9 +82,6 @@ int isSizeSumBounded(size_t left, size_t right){
 size_t boundedSizeSum(size_t left, size_t right){
   return isSizeSumBounded(left, right) ? left + right : SIZE_MAX;
 }
-
-// Similar considerations are made for a difference of size_t, except the
-// parity doesn't matter, and now the bound is a lower bound 0.
 
 int isSizeDifferenceBounded(size_t minuend, size_t subtrahend){
   return subtrahend <= minuend;
@@ -144,6 +155,16 @@ ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
   }while(size < len);
   return ByteArray_resize(this, size);
 }
+
+ByteArray* ByteArray_newAllZeroes(size_t size){
+  ByteArray_new(size, )
+}
+
+ByteArray* ByteArray_newAllOnes(size_t size){
+  ByteArray_new(size, )
+}
+
+ByteArray* ByteArray_padTo(ByteArray* this){}
 
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
   ByteArray_growToAtLeast(this, len);
