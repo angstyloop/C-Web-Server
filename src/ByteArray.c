@@ -315,85 +315,78 @@ int main(void){
   if(!data) perrorExit("calloc");
   data[0]=1;
 
-  puts("TEST");
+  puts("TEST\n");
 
-  puts("");
   puts("create");
   ByteArray* ba = ByteArray_create(1);
+  puts("\n");
+
   puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  printf("\n\n");
 
-  puts("");
   puts("init");
   ByteArray_init(ba, len, data);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
-//XXX
-  puts("");
+  printf("\n\n");
+
   puts("resize");
   ByteArray_resize(ba, size*=2);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  printf("\n\n");
 
-  puts("");
   puts("free");
   ByteArray_free(ba);
-  puts("");
+  printf("\n\n");
 
-  puts("");
   puts("create");
   ba = ByteArray_create(size);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
   puts("init using $data with $len > $ba->size, to force a resize"); 
   unsigned char* temp = realloc(data, len*=10);
   if(!temp) perrorExit("realloc");
   data=temp;
   memset(data, 1, len);
   ByteArray_init(ba, len, data);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
   puts("growByFactor");
   ByteArray_growByFactor(ba, 2);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
   puts("shrinkByFactor");
   ByteArray_shrinkByFactor(ba, 2);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
   puts("growByDelta");
   ByteArray_growByDelta(ba, size = ba->size);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
   puts("shrinkByDelta");
   ByteArray_shrinkByDelta(ba, size);
-  puts("print");
   ByteArray_print(ba, stdout);
-  puts("");
+  puts("\n");
 
-  puts("");
+  puts("growByFactor");
+  ByteArray_growByFactor(ba, 2);
+  ByteArray_print(ba, stdout);
+  puts("\n");
+
+  puts("trim");
+  ByteArray_trim(ba, 2);
+  ByteArray_print(ba, stdout);
+  puts("\n");
+
   puts("free");
   ByteArray_free(ba);
+  puts("\n");
 
-  puts("");
   puts("OK");
   returnSuccess;
 }
