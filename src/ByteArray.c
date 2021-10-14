@@ -1,11 +1,20 @@
 #include "ByteArray.h"
 
 ByteArray* ByteArray_create(size_t size){
-  ByteArray* this = calloc(1, sizeof(ByteArray));
-  this->data = calloc(size, 1);
+  ByteArray* this=0;
+
+  if(!(this = calloc(1, sizeof(ByteArray)))) 
+    perrorExit("ByteArray_create calloc this");
+
+  if(!(this->data = calloc(size, 1))){
+    free(this);
+    perrorExit("ByteArray_create calloc this->size");
+  }
   this->size=size;
   return this;
 }
+
+ByteArray* ByteArray_zero(ByteArray* this, size_t newSize){}
 
 // resize won't do unneccessary work
 
@@ -137,15 +146,9 @@ ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
 }
 
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
-  //printf("this: %s, size: %zu, len: %zu, data: %s\n", 
-  //  this?"non-null":"null", this->size, len, data?"non-null":"null");
   ByteArray_growToAtLeast(this, len);
-
-//
-  if(!this->data) puts("\t<#^#>\n");
-//
   memcpy(this->data, data, len);
-
+  this->len=len;
   return this;
 }
 
@@ -309,6 +312,7 @@ ByteArray* ByteArray_unsetBit(ByteArray* this, uintmax_t index){
 int main(void){
   size_t len, size; len=size=1;
   unsigned char* data = calloc(1, 1);
+  if(!data) perrorExit("calloc");
   data[0]=1;
 
   puts("TEST");
@@ -326,7 +330,7 @@ int main(void){
   puts("print");
   ByteArray_print(ba, stdout);
   puts("");
-
+//XXX
   puts("");
   puts("resize");
   ByteArray_resize(ba, size*=2);
@@ -396,7 +400,8 @@ int main(void){
 #endif
 
 /*
-cl /Wall /wd4710 /Fe:test-byte-array /DTEST_BYTE_ARRAY ByteArray.c getBit.c setBit.c unsetBit.c countOneBits.c countZeroBits.c exitFailure.c perrorExit.c
+cl /Wall /wd4706 /wd4710 /Fe:test-byte-array /DTEST_BYTE_ARRAY ByteArray.c getBit.c setBit.c unsetBit.c countOneBits.c countZeroBits.c exitFailure.c perrorExit.c
 
 4710: (fprintf) member of printf family of functions not inlined
+4706: assignment within conditional expression
 */

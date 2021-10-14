@@ -24,6 +24,7 @@ struct ByteArray{
 };
 
 ByteArray* ByteArray_create(size_t size);
+ByteArray* ByteArray_zero(ByteArray* this, size_t newSize);
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize);
 int isSizeProductBounded(size_t left, size_t right);
 size_t boundedSizeProduct(size_t left, size_t right);
