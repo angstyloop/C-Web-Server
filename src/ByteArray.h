@@ -24,7 +24,7 @@ struct ByteArray{
 };
 
 ByteArray* ByteArray_create(size_t size);
-ByteArray* ByteArray_zero(ByteArray* this, size_t newSize);
+ByteArray* ByteArray_zero(ByteArray* this);
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize);
 int isSizeProductBounded(size_t left, size_t right);
 size_t boundedSizeProduct(size_t left, size_t right);
@@ -36,11 +36,14 @@ ByteArray* ByteArray_growByFactor(ByteArray* this, size_t factor);
 ByteArray* ByteArray_growByDelta(ByteArray* this, size_t delta);
 ByteArray* ByteArray_shrinkByFactor(ByteArray* this, size_t factor);
 ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta);
+ByteArray* ByteArray_growUntil(ByteArray* this, size_t lowerBound);
 ByteArray* growToAccommodate(ByteArray* this, size_t len);
+ByteArray* ByteArray_padTo(ByteArray* this, size_t newLen);
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data);
 ByteArray* ByteArray_new(size_t len, unsigned char* data);
 ByteArray* ByteArray_append(ByteArray* this, ByteArray* that);
 ByteArray* ByteArray_trim(ByteArray* this);
+ByteArray* ByteArray_shrinkUntil(ByteArray* this, size_t lowerBound);
 ByteArray* ByteArray_slice(ByteArray* this, size_t start, size_t end);
 ByteArray* ByteArray_printHeader(ByteArray* this, FILE* out);
 ByteArray* ByteArray_print(ByteArray* this, FILE* out);

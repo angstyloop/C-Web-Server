@@ -20,10 +20,8 @@ ByteArray* ByteArray_fill(ByteArray* this, unsigned char byte){
 }
 
 ByteArray* ByteArray_zero(ByteArray* this){
-  return ByteArray_fill(this, 0, this->size);
+  return ByteArray_fill(this, 0);
 }
-
-// resize won't do unneccessary work
 
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   if(this->size == newSize){
@@ -136,38 +134,28 @@ ByteArray* ByteArray_shrinkByDelta(ByteArray* this, size_t delta){
 #define GROW_FACTOR 2
 #define SHRINK_FACTOR GROW_FACTOR
 
-ByteArray* ByteArray_growToAtLeast(ByteArray* this, size_t len){
-  if(!this || !this->size){
-    return ByteArray_create(len);
+ByteArray* ByteArray_growUntil(ByteArray* this, size_t lowerBound){
+  if(!this->size){
+    return ByteArray_create(lowerBound);
   }
-  if(this->size >= len){
+  if(this->size >= lowerBound){
     return this;
   }
-  if(!len || len == SIZE_MAX){
-    return ByteArray_resize(this, len);
+  if(!lowerBound || lowerBound == SIZE_MAX){
+    return ByteArray_resize(this, lowerBound);
   }
   // Exponentially increment $size by a pre-defined growth factor until it
-  // exceeds $len. 
+  // exceeds $lowerBound. 
   size_t size = this->size;
   do{
     size = boundedSizeProduct(size, GROW_FACTOR);
     //printf("size: %zu\n", size);
-  }while(size < len);
+  }while(size < lowerBound);
   return ByteArray_resize(this, size);
 }
 
-ByteArray* ByteArray_newAllZeroes(size_t size){
-  ByteArray_new(size, )
-}
-
-ByteArray* ByteArray_newAllOnes(size_t size){
-  ByteArray_new(size, )
-}
-
-ByteArray* ByteArray_padTo(ByteArray* this){}
-
 ByteArray* ByteArray_init(ByteArray* this, size_t len, unsigned char* data){
-  ByteArray_growToAtLeast(this, len);
+  ByteArray_growUntil(this, len);
   memcpy(this->data, data, len);
   this->len=len;
   return this;
@@ -183,28 +171,34 @@ ByteArray* ByteArray_append(ByteArray* this, ByteArray* that){
   if(!that && !that->len){
     return this;
   }
-  ByteArray_growToAtLeast(this, that->len);
+  ByteArray_growUntil(this, that->len);
   memcpy(this->data + this->len, that->data, that->len);
   this->len += that->len;
   return this;
 }
 
-// Trim by dividing as many times by SHRINK_FACTOR as possible without going 
-// below $len.
-//
-// E.g. If $SHRINK_FACTOR is 2, $size is 16, and $len is 3, trimming will
-// resize to 4. If instead $SHRINK_FACTOR is 3, then trimming will resize
-// to 5 instead.
-//
+// Reduce size as much as possible without truncating data, by dividing as many 
+// times by SHRINK_FACTOR as possible without going below $len.
+// E.g. If $SHRINK_FACTOR is 2, $size is 16, and $len is 3, 16 will be resized
+// to 4. If instead $SHRINK_FACTOR is 3, then 16 will be resized to 5.
 
-ByteArray* ByteArray_trim(ByteArray* this){
+ByteArray* ByteArray_shrinkUntil(ByteArray* this, size_t lowerBound){
+  if(!this->size || lowerBound >= this->len){
+    return this;
+  }
   size_t size = this->size, temp = size / SHRINK_FACTOR;
-  while(temp >= this->len){
+  while(temp >= lowerBound){
     size = temp;
     temp /= SHRINK_FACTOR;
   }
   this->size = size;
   return ByteArray_resize(this, size);
+}
+
+// Trim size of the buffer to the length of the data.
+
+ByteArray* ByteArray_trim(ByteArray* this){
+  return ByteArray_resize(this, this->len);
 }
 
 // [start,end)
@@ -253,7 +247,7 @@ uintmax_t ByteArray_countZeroBits(ByteArray* this){
 }
 
 // TODO: try removing this
-typedef unsigned char (*UCharBinOp)(unsigned char, unsigned char);
+//typedef unsigned char (*UCharBinOp)(unsigned char, unsigned char);
 
 unsigned char UCharBinOp_xor(unsigned char a, unsigned char b){
   return a^b;
@@ -400,7 +394,7 @@ int main(void){
   puts("\n");
 
   puts("trim");
-  ByteArray_trim(ba, 2);
+  ByteArray_trim(ba);
   ByteArray_print(ba, stdout);
   puts("\n");
 
