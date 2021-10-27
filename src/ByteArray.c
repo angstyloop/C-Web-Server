@@ -15,7 +15,7 @@ ByteArray* ByteArray_create(size_t size){
 }
 
 ByteArray* ByteArray_fill(ByteArray* this, unsigned char byte){
-  memset(this->data, (int)byte, this->size);
+  memset_s(this->data, (int)byte, this->size);
   return this;
 }
 
