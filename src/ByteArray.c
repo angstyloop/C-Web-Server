@@ -14,13 +14,18 @@ ByteArray* ByteArray_create(size_t size){
   return this;
 }
 
-ByteArray* ByteArray_fill(ByteArray* this, unsigned char byte){
-  memset_s(this->data, (int)byte, this->size);
+ByteArray* ByteArray_fillRange(ByteArray* this, size_t start, size_t end, char byte){
+  const size_t end_ = end > this->len ? end : this->len;
+  for(size_t start=0; i<end_; ++i)
+    this->data[i] = byte;
   return this;
 }
 
-ByteArray* ByteArray_zero(ByteArray* this){
-  return ByteArray_fill(this, 0);
+ByteArray* ByteArray_fill(ByteArray* this, unsigned char byte){
+  for(size_t i=0; i<this->len; ++i){
+    this->data[i] = byte;
+  }
+  return this;
 }
 
 ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
@@ -37,11 +42,9 @@ ByteArray* ByteArray_resize(ByteArray* this, size_t newSize){
   };
   this->data = temp; 
   this->size = newSize;
-  if(newSize < this->len){ // if truncating, set the length to the new size
+  if(newSize < this->len){ // if truncating, set the length to the new size (no need to add a null byte, like in Str)
     this->len = newSize;
-  } else if(newSize > this->len){ // if expanding, pad end with zeroes
-    memset(this->data + this->len, 0, this->size - this->len + 1);
-  }
+  }  
   return this;
 }
 // Technical points:
@@ -231,9 +234,9 @@ ByteArray* ByteArray_print(ByteArray* this, FILE* out){
 }
 
 ByteArray* ByteArray_free(ByteArray* this){
+  secure_memzero(this->data, this->size);
   free(this->data);
-  this->len = this->size = 0; 
-  this->data = 0;
+  secure_memzero(this, sizeof ByteArray);
   free(this);
   return this;
 }
